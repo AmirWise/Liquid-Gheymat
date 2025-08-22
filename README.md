@@ -3,7 +3,7 @@
 A **modern currency tracker** with **Liquid Glass design**, vivid colors, and dynamic blur effects.
 
 ![Style](https://img.shields.io/badge/Style-Liquid%20Glass-blue) ![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-green) ![Python](https://img.shields.io/badge/Python-3.8%2B-yellow)
-
+‌
 ## ✨ Features
 
 - **Liquid Glass UI** – Smooth transparency, vivid 3D highlights and shadows  
