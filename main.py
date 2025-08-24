@@ -9,7 +9,7 @@ import requests
 import threading
 from datetime import datetime
 
-# --- بررسی سیستم‌عامل برای اعمال افکت ---
+# --- Reviewing the operating system to apply the effect ---
 IS_WINDOWS = sys.platform == "win32"
 if IS_WINDOWS:
     try:
@@ -20,7 +20,7 @@ if IS_WINDOWS:
         PYWINSTYLES_AVAILABLE = False
         print("❌ pywinstyles not available - install with: pip install pywinstyles")
 
-# --- توابع کمکی ---
+# --- Helper functions ---
 def resource_path(relative_path):
     try:
         base_path = sys._MEIPASS
@@ -34,7 +34,7 @@ def load_font(font_path):
     except Exception as e:
         print(f"Failed to load font: {e}")
 
-# --- ثابت‌ها ---
+# --- Constants ---
 FONT_NAME = "SF Pro Display"
 FALLBACK_FONT = "Segoe UI"
 FONT_PATH = resource_path("assets/fonts/Vazirmatn-Regular.ttf")
@@ -45,13 +45,13 @@ APP_WIDTH, APP_HEIGHT = 1200, 850
 
 load_font(FONT_PATH)
 
-# --- رنگ‌های Liquid Glass با شفافیت و عمق 3D ---
+# --- Liquid Glass colors with transparency and 3D depth ---
 LIQUID_GLASS_COLORS = {
-    # پس‌زمینه‌های Liquid
+    # Liquid backgrounds
     'bg_light': "#f8f9fb",
     'bg_dark': "#0a0a0c",
 
-    # Liquid Glass Cards با شفافیت
+    # Liquid Glass Cards with transparency
     'glass_light': "#ffffff",
     'glass_dark': "#1a1a1e",
     'glass_overlay_light': "#fdfdfe",
@@ -87,7 +87,7 @@ LIQUID_GLASS_COLORS = {
     'separator_dark': "#1c1c1e"
 }
 
-# --- کلاس اصلی با Liquid Glass و 3D ---
+# --- Main class with Liquid Glass and 3D ---
 class LiquidGlassPriceTracker(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -102,22 +102,22 @@ class LiquidGlassPriceTracker(ctk.CTk):
         self.api_status = "connecting"
         self.last_update = "Never"
 
-        # تنظیم آیکون
+        # Icon adjustment
         try:
             self.iconbitmap(ICON_PATH)
         except:
             print("Icon not found.")
 
-        # تنظیمات اولیه با Liquid Glass
+        # Initial settings with Liquid Glass
         self.configure(fg_color=(LIQUID_GLASS_COLORS['bg_light'], LIQUID_GLASS_COLORS['bg_dark']))
 
-        # اعمال Liquid Glass از ابتدا
+        # Applying Liquid Glass from the beginning
         self.apply_liquid_glass()
 
         self.create_liquid_layout()
         self.load_and_display_data()
 
-        # تنظیم responsive
+        # responsive adjustment
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
         
@@ -125,29 +125,29 @@ class LiquidGlassPriceTracker(ctk.CTk):
         self.start_auto_refresh()
 
     def apply_liquid_glass(self):
-        """اعمال افکت Liquid Glass با شفافیت کامل"""
+        """apply Liquid Glass effect with full transparency"""
         if not IS_WINDOWS or not PYWINSTYLES_AVAILABLE:
             print("🌊 Liquid Glass simulation applied")
             return
 
         try:
-            # پاک کردن افکت‌های قبلی
+            # clear previous effects
             pywinstyles.apply_style(self, "normal")
             self.after(50, self._apply_liquid_effect)
         except Exception as e:
             print(f"❌ Liquid Glass failed: {e}")
 
     def _apply_liquid_effect(self):
-        """اعمال افکت Liquid با بهترین تنظیمات"""
+        """apply Liquid effect with optimal settings"""
         try:
-            # تست روش‌های مختلف Liquid
+            # test different Liquid methods
             success = False
 
-            # روش اول: Acrylic با تنظیمات Liquid
+            # method 1: Acrylic with Liquid settings
             if not success:
                 try:
                     pywinstyles.apply_style(self, "acrylic")
-                    # تنظیم شفافیت بیشتر برای Liquid Glass
+                    # increase transparency for Liquid Glass
                     self.attributes('-alpha', 0.97)
                     self.current_theme = "liquid_glass"
                     print("🌊✨ Liquid Glass activated (Acrylic)")
@@ -155,7 +155,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
                 except:
                     pass
 
-            # روش دوم: Mica برای افکت Liquid
+            # method 2: Mica for Liquid effect
             if not success:
                 try:
                     pywinstyles.apply_style(self, "mica")
@@ -166,7 +166,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
                 except:
                     pass
 
-            # روش سوم: Blur معمولی
+            # method 3: standard Blur
             if not success:
                 try:
                     pywinstyles.apply_style(self, "blur")
@@ -186,7 +186,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
             self.current_theme = "liquid_glass"
 
     def apply_enhanced_vibrancy(self):
-        """افکت Vibrancy پیشرفته"""
+        """advanced Vibrancy effect"""
         if not IS_WINDOWS or not PYWINSTYLES_AVAILABLE:
             return
 
@@ -197,11 +197,11 @@ class LiquidGlassPriceTracker(ctk.CTk):
             print(f"❌ Enhanced Vibrancy failed: {e}")
 
     def _apply_vibrancy_enhanced(self):
-        """اعمال Vibrancy با کیفیت بالا"""
+        """apply Vibrancy with high quality"""
         try:
             success = False
 
-            # تست Aero برای Vibrancy
+            # test Aero for Vibrancy
             if not success:
                 try:
                     pywinstyles.apply_style(self, "aero")
@@ -222,7 +222,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
     def create_liquid_layout(self):
         """طراحی Layout با Liquid Glass و 3D"""
 
-        # فریم اصلی با فضابندی بهتر
+        # main frame with improved spacing
         self.main_container = ctk.CTkFrame(
             self,
             fg_color="transparent",
@@ -231,7 +231,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
         self.main_container.pack(fill="both", expand=True, padx=16, pady=16)
         self.main_container.grid_columnconfigure(0, weight=1)
 
-        # Main scrollable area با حاشیه کم
+        # main scrollable area with minimal margin
         self.main_scroll = ctk.CTkScrollableFrame(
             self.main_container,
             fg_color="transparent",
@@ -271,11 +271,11 @@ class LiquidGlassPriceTracker(ctk.CTk):
         )
         hero_frame.grid(row=0, column=0, sticky="ew", pady=(0, 24))
 
-        # Content با فضای مناسب
+        # content with proper spacing
         content = ctk.CTkFrame(hero_frame, fg_color="transparent")
         content.pack(fill="both", expand=True, padx=24, pady=20)
 
-        # Floating title با 3D effect
+        # floating title with 3D effect
         title_frame = ctk.CTkFrame(content, fg_color="transparent")
         title_frame.pack(anchor="w")
 
@@ -333,7 +333,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
 
     def create_3d_featured_section(self):
         """بخش ارزهای ویژه با 3D Cards"""
-        # Section title با spacing بهتر
+        # section title with improved spacing
         section_title = ctk.CTkLabel(
             self.main_scroll,
             text="🌟 Featured Currencies",
@@ -349,12 +349,12 @@ class LiquidGlassPriceTracker(ctk.CTk):
         )
         self.featured_container.grid(row=2, column=0, sticky="ew", pady=(0, 32))
 
-        # Responsive grid با فضای مناسب
+        # responsive grid with proper spacing
         for i in range(4):
             self.featured_container.grid_columnconfigure(i, weight=1)
 
     def create_enhanced_selector(self):
-        """انتخابگر ارز با طراحی Liquid و 3D"""
+        """currency selector with Liquid and 3D design"""
         selector_card = self.create_liquid_card(
             self.main_scroll,
             height=100,
@@ -396,7 +396,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
         )
         title.pack(side="left", padx=(12, 0))
 
-        # Enhanced ComboBox با 3D effect
+        # enhanced ComboBox with 3D effect
         self.currency_selector = ctk.CTkComboBox(
             content,
             font=(FALLBACK_FONT, 14),
@@ -425,8 +425,8 @@ class LiquidGlassPriceTracker(ctk.CTk):
         add_btn.grid(row=1, column=2)
 
     def create_3d_dynamic_section(self):
-        """بخش ارزهای اضافه شده با 3D Grid"""
-        # Title با فضای بهتر
+        """added currencies section with 3D grid"""
+        # title with improved spacing
         self.dynamic_title = ctk.CTkLabel(
             self.main_scroll,
             text="💎 Your Portfolio",
@@ -451,7 +451,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
             self.dynamic_container.grid_columnconfigure(i, weight=1)
 
     def create_liquid_controls(self):
-        """پنل کنترل Liquid با 3D Effects"""
+        """Liquid control panel with 3D effects"""
         control_card = self.create_liquid_card(
             self.main_scroll,
             height=90,
@@ -492,7 +492,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
             btn.pack(side="left", padx=(0, 8) if i < len(buttons) - 1 else (0, 0))
 
     def create_refresh_controls(self):
-        """بخش کنترل‌های رفرش و آپدیت"""
+        """refresh and update controls section"""
         refresh_card = self.create_liquid_card(
             self.main_scroll,
             height=120,
@@ -546,7 +546,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
         self.last_update_label.pack(side="left")
         
     def test_api_connection(self):
-        """تست اتصال API برای debugging"""
+        """API connection test for debugging"""
         def test_thread():
             try:
                 self.after(0, lambda: self.update_api_status("connecting", "Testing API..."))
@@ -658,7 +658,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
         threading.Thread(target=test_thread, daemon=True).start()
 
     def apply_crystal_mode(self):
-        """حالت کریستال با شفافیت بالا"""
+        """crystal mode with high transparency"""
         if not IS_WINDOWS or not PYWINSTYLES_AVAILABLE:
             return
 
@@ -672,9 +672,9 @@ class LiquidGlassPriceTracker(ctk.CTk):
             self.apply_liquid_glass()
 
     def create_liquid_card(self, parent, height=None, glass_level=1, shadow_3d=False, **kwargs):
-        """ساخت کارت Liquid Glass با 3D Effects"""
+        """create Liquid Glass card with 3D effects"""
 
-        # تعیین سطح شفافیت Glass
+        # set Glass transparency level
         if glass_level == 1:
             fg_color = (LIQUID_GLASS_COLORS['glass_light'], LIQUID_GLASS_COLORS['glass_dark'])
         elif glass_level == 2:
@@ -698,7 +698,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
         return card
 
     def create_liquid_button(self, parent, text, command, style="primary", width=None, **kwargs):
-        """ساخت دکمه Liquid با 3D Effects"""
+        """create Liquid button with 3D effects"""
 
         style_configs = {
             'primary_3d': {
@@ -748,42 +748,42 @@ class LiquidGlassPriceTracker(ctk.CTk):
         return ctk.CTkButton(parent, **default_config)
 
     def create_3d_currency_card(self, parent, currency_data):
-        """ساخت کارت ارز 3D با Liquid Glass - Enhanced Display"""
+        """create 3D currency card with Liquid Glass – enhanced display"""
 
-        # Main card با 3D shadow
+        # main card with 3D shadow
         card = self.create_liquid_card(
             parent,
             width=240,
-            height=145,  # کمی بلندتر برای نمایش بهتر
+            height=145,  # slightly taller for better display
             glass_level=2
         )
 
-        # Content container با padding بهینه
+        # content container with optimized padding
         content = ctk.CTkFrame(card, fg_color="transparent")
         content.pack(fill="both", expand=True, padx=16, pady=16)
 
-        # Header section با ارتفاع مناسب
+        # header section with proper height
         header = ctk.CTkFrame(content, fg_color="transparent", height=38)
         header.pack(fill="x", pady=(0, 10))
         header.pack_propagate(False)
 
-        # Currency name بدون truncate اجباری
+        # currency name without forced truncation
         name_text = currency_data.get('name', 'Currency')
-        # فقط اگر واقعا خیلی طولانی بود کوتاه کن
+        # truncate only if extremely long
         if len(name_text) > 22:
             name_text = name_text[:19] + "..."
 
         name = ctk.CTkLabel(
             header,
             text=name_text,
-            font=(FALLBACK_FONT, 14, "bold"),  # Bold برای بهتر دیده شدن
+            font=(FALLBACK_FONT, 14, "bold"),  # bold for better visibility
             text_color=(LIQUID_GLASS_COLORS['text_primary_light'], LIQUID_GLASS_COLORS['text_primary_dark']),
             anchor="w",
             justify="left"
         )
         name.pack(fill="x", pady=(0, 2))
 
-        # Symbol با فونت بهتر
+        # symbol with improved font
         symbol_text = currency_data.get('symbol', '')
         symbol = ctk.CTkLabel(
             header,
@@ -795,7 +795,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
         )
         symbol.pack(fill="x")
 
-        # Price section با ارتفاع بهتر
+        # price section with improved height
         price_container = ctk.CTkFrame(content, fg_color="transparent", height=48)
         price_container.pack(fill="x", pady=(0, 10))
         price_container.pack_propagate(False)
@@ -803,42 +803,42 @@ class LiquidGlassPriceTracker(ctk.CTk):
         price = currency_data.get('price', '0')
         try:
             price_float = float(price)
-            # فرمت قیمت بهبود یافته با 5 رقم اعشار
+            # improved price format with 5 decimal places
             if price_float >= 100000:
-                # برای اعداد بزرگ (مثل تومان)
+                # for large numbers (e.g., Toman)
                 price_text = f"{price_float:,.0f}"
             elif price_float >= 1000:
-                # برای اعداد متوسط
+                # for medium numbers
                 price_text = f"{price_float:,.2f}"
             elif price_float >= 1:
-                # برای اعداد کوچک
+                # for small numbers
                 price_text = f"{price_float:,.4f}"
             else:
-                # برای اعداد خیلی کوچک (کریپتو)
+                # for very small numbers (crypto)
                 price_text = f"{price_float:.5f}"
 
-            # حذف صفرهای اضافی از انتها
+            # remove trailing zeros
             if '.' in price_text:
                 price_text = price_text.rstrip('0').rstrip('.')
 
         except:
             price_text = str(price)
 
-        # فقط در صورت نیاز کوتاه کن
+        # truncate only if necessary
         if len(price_text) > 15:
             price_text = price_text[:12] + "..."
 
         price_label = ctk.CTkLabel(
             price_container,
             text=price_text,
-            font=(FALLBACK_FONT, 18, "bold"),  # فونت کوچک‌تر برای فضای بیشتر
+            font=(FALLBACK_FONT, 18, "bold"),  # smaller font for more space
             text_color=(LIQUID_GLASS_COLORS['text_primary_light'], LIQUID_GLASS_COLORS['text_primary_dark']),
             anchor="w",
             justify="left"
         )
         price_label.pack(fill="x", pady=(0, 2))
 
-        # Unit با نمایش بهتر
+        # unit with improved display
         unit_text = currency_data.get('unit', '')
         unit = ctk.CTkLabel(
             price_container,
@@ -850,13 +850,13 @@ class LiquidGlassPriceTracker(ctk.CTk):
         )
         unit.pack(fill="x")
 
-        # Change indicator با 3D pill
+        # change indicator with 3D pill
         change_percent = currency_data.get('change_percent', 0)
         try:
             change_val = float(change_percent)
             if change_val >= 0:
                 color = LIQUID_GLASS_COLORS['green_glass']
-                text = f"↗ +{change_val:.2f}%"  # 2 رقم اعشار برای درصد
+                text = f"↗ +{change_val:.2f}%"  # 2 decimal places for percentage
             else:
                 color = LIQUID_GLASS_COLORS['red_glass']
                 text = f"↘ {change_val:.2f}%"
@@ -868,7 +868,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
             content,
             fg_color=color,
             corner_radius=10,
-            height=26  # کمی بلندتر
+            height=26  # slightly taller
         )
         change_pill.pack(fill="x")
 
@@ -883,12 +883,12 @@ class LiquidGlassPriceTracker(ctk.CTk):
         return card
 
     def fetch_api_data(self):
-        """دریافت داده‌ها از API با headers و debugging بهتر"""
+        """fetch data from API with headers and improved debugging"""
         try:
             print(f"🌐 Fetching data from API: {API_URL}")
             self.update_api_status("connecting", "Fetching Live Data...")
             
-            # Headers برای درخواست بهتر
+            # headers for improved request
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
                 'Accept': 'application/json, text/plain, */*',
@@ -898,7 +898,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
                 'Cache-Control': 'no-cache'
             }
             
-            # درخواست با تنظیمات بهتر
+            # request with improved settings
             response = requests.get(
                 API_URL, 
                 headers=headers,
@@ -910,23 +910,23 @@ class LiquidGlassPriceTracker(ctk.CTk):
             print(f"📡 Response status code: {response.status_code}")
             print(f"📝 Response headers: {dict(response.headers)}")
             
-            # بررسی status code
+            # check status code
             response.raise_for_status()
             
-            # بررسی content type
+            # check content type
             content_type = response.headers.get('content-type', '')
             print(f"📄 Content type: {content_type}")
             
-            # تلاش برای parse کردن JSON
+            # attempt to parse JSON
             try:
                 data = response.json()
             except ValueError as json_error:
-                # اگر JSON نبود، متن خام را چاپ کن
+                # if not JSON, print raw text
                 print(f"❌ JSON parse error: {json_error}")
                 print(f"📝 Raw response text (first 500 chars): {response.text[:500]}")
                 raise ValueError(f"Invalid JSON response: {json_error}")
             
-            # بررسی وجود داده
+            # check for data existence
             if not data:
                 raise ValueError("Empty response from API")
             
@@ -975,7 +975,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
             return None
 
     def update_api_status(self, status, message):
-        """به‌روزرسانی وضعیت API در رابط کاربری"""
+        """update API status in UI"""
         self.api_status = status
         
         try:
@@ -999,19 +999,19 @@ class LiquidGlassPriceTracker(ctk.CTk):
             print(f"Status update error: {e}")
 
     def load_and_display_data(self):
-        """بارگذاری و نمایش داده‌ها از API با fallback بهتر"""
+        """load and display data from API with improved fallback"""
         self.all_currencies = {}
         self.selected_currencies = set()
 
-        # دریافت داده‌ها از API
+        # fetch data from API
         api_data = self.fetch_api_data()
         
         if api_data:
             try:
-                # پردازش داده‌های API - انعطاف‌پذیر برای فرمت‌های مختلف
+                # process API data – flexible for different formats
                 processed_count = 0
                 
-                # حالت 1: اگر data یک dict با categories باشد
+                # mode 1: if data is a dict with categories
                 if isinstance(api_data, dict):
                     for category, items in api_data.items():
                         if isinstance(items, list):
@@ -1019,17 +1019,17 @@ class LiquidGlassPriceTracker(ctk.CTk):
                                 if self.process_currency_item(item):
                                     processed_count += 1
                         elif isinstance(items, dict):
-                            # اگر items خودش یک currency object باشد
+                            # if items itself is a currency object
                             if self.process_currency_item(items):
                                 processed_count += 1
                 
-                # حالت 2: اگر data مستقیماً یک list باشد
+                # mode 2: if data is directly a list
                 elif isinstance(api_data, list):
                     for item in api_data:
                         if self.process_currency_item(item):
                             processed_count += 1
                 
-                # حالت 3: اگر data یک currency object مستقیم باشد
+                # mode 3: if data is a direct currency object
                 elif isinstance(api_data, dict) and api_data.get('symbol'):
                     if self.process_currency_item(api_data):
                         processed_count += 1
@@ -1049,11 +1049,11 @@ class LiquidGlassPriceTracker(ctk.CTk):
                 self.all_currencies = self.get_sample_data()
                 self.update_api_status("error", "Data Processing Error")
         else:
-            # در صورت عدم دسترسی به API از داده‌های نمونه استفاده کن
+            # use sample data if API is unavailable
             print("🔄 Using sample data due to API unavailability")
             self.all_currencies = self.get_sample_data()
 
-        # اگر هیچ داده‌ای نداریم، از نمونه استفاده کن
+        # use sample data if no data is available
         if not self.all_currencies:
             print("📊 No data available, using sample dataset")
             self.all_currencies = self.get_sample_data()
@@ -1062,16 +1062,16 @@ class LiquidGlassPriceTracker(ctk.CTk):
         self.update_currency_selector()
 
     def process_currency_item(self, item):
-        """پردازش یک آیتم ارز از API"""
+        """process a single currency item from API"""
         try:
             if not isinstance(item, dict):
                 return False
                 
-            # استخراج symbol با روش‌های مختلف
+            # extract symbol using different methods
             symbol = item.get('symbol') or item.get('Symbol') or item.get('code') or item.get('Code')
             
             if not symbol:
-                # تلاش برای استخراج از key های مختلف
+                # attempt extraction from different keys
                 for key in ['name', 'Name', 'currency', 'Currency']:
                     if key in item:
                         symbol = str(item[key]).upper()
@@ -1080,16 +1080,16 @@ class LiquidGlassPriceTracker(ctk.CTk):
             if not symbol:
                 return False
             
-            # استخراج price
+            # extract price
             price = item.get('price') or item.get('Price') or item.get('value') or item.get('Value') or 0
             
-            # استخراج change_percent
+            # extract change\_percent
             change = item.get('change_percent') or item.get('Change_Percent') or item.get('change') or item.get('Change') or 0
             
-            # استخراج unit
+            # Extracting unit
             unit = item.get('unit') or item.get('Unit') or item.get('currency') or item.get('Currency') or 'USD'
             
-            # فرمت کردن نام
+            # Formating the name
             name = self.format_currency_name(item, symbol)
             
             self.all_currencies[symbol] = {
@@ -1107,7 +1107,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
             return False
 
     def format_currency_name(self, item, symbol):
-        """فرمت کردن نام ارز با ایموجی مناسب"""
+        """Formatted crypto name with appropriate emoji"""
         name_mapping = {
             'USD': "🇺🇸 US Dollar",
             'EUR': "🇪🇺 Euro", 
@@ -1128,12 +1128,12 @@ class LiquidGlassPriceTracker(ctk.CTk):
         if symbol in name_mapping:
             return name_mapping[symbol]
         else:
-            # استفاده از نام انگلیسی از API
+            # Using the English name from the API
             api_name = item.get('name_en', item.get('name', symbol))
             return f"💱 {api_name}" if api_name != symbol else symbol
 
     def get_sample_data(self):
-        """داده‌های نمونه با کیفیت Liquid - Enhanced Display"""
+        """Sample data with Liquid quality - Enhanced Display"""
         return {
             "USD": {"name": "🇺🇸 US Dollar", "price": "93750.25", "unit": "تومان", "change_percent": "1.04", "symbol": "USD"},
             "EUR": {"name": "🇪🇺 Euro", "price": "109330.78", "unit": "تومان", "change_percent": "-0.52", "symbol": "EUR"},
@@ -1144,8 +1144,8 @@ class LiquidGlassPriceTracker(ctk.CTk):
         }
 
     def display_featured_currencies(self):
-        """نمایش ارزهای ویژه با 3D Cards"""
-        # انتخاب ارزهای پیش‌فرض یا اولین ارزهای موجود
+        """Displaying featured currencies with 3D Cards"""
+        # Selecting default currencies or the first available currencies
         preferred_featured = ["USD", "EUR", "BTC", "ETH"]
         available_symbols = list(self.all_currencies.keys())
         
@@ -1154,7 +1154,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
             if symbol in self.all_currencies:
                 featured.append(symbol)
         
-        # اگر کافی نداریم، از بقیه اضافه کن
+        # If we don't have enough, add from the rest
         while len(featured) < 4 and len(featured) < len(available_symbols):
             for symbol in available_symbols:
                 if symbol not in featured:
@@ -1162,7 +1162,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
                     if len(featured) >= 4:
                         break
 
-        for i, symbol in enumerate(featured[:4]):  # حداکثر 4 تا
+        for i, symbol in enumerate(featured[:4]):  # Maximum of 4
             if symbol in self.all_currencies:
                 card = self.create_3d_currency_card(
                     self.featured_container,
@@ -1172,7 +1172,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
                 self.selected_currencies.add(symbol)
 
     def update_currency_selector(self):
-        """به‌روزرسانی لیست ارزها در انتخابگر"""
+        """Updating the list of currencies in the selector"""
         available = [
             data['name'] for symbol, data in self.all_currencies.items()
             if symbol not in self.selected_currencies
@@ -1186,7 +1186,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
             self.currency_selector.set(available[0])
 
     def add_selected_currency(self):
-        """افزودن ارز انتخابی با انیمیشن"""
+        """Adding the selected currency with animation"""
         selected_name = self.currency_selector.get()
 
         if selected_name == "✨ All currencies added!":
@@ -1194,7 +1194,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
                                 "Amazing! You've added all available currencies to your liquid portfolio!")
             return
 
-        # پیدا کردن symbol مربوطه
+        # Finding the corresponding symbol
         selected_symbol = None
         for symbol, data in self.all_currencies.items():
             if data['name'] == selected_name:
@@ -1202,13 +1202,13 @@ class LiquidGlassPriceTracker(ctk.CTk):
                 break
 
         if selected_symbol and selected_symbol not in self.selected_currencies:
-            # ساخت کارت جدید با 3D effect
+            # Finding the corresponding symbol
             card = self.create_3d_currency_card(
                 self.dynamic_container,
                 self.all_currencies[selected_symbol]
             )
 
-            # قرار دادن در grid با فضای مناسب
+            # Placing in a grid with appropriate spacing
             card.grid(
                 row=self.dynamic_row,
                 column=self.dynamic_col,
@@ -1217,36 +1217,36 @@ class LiquidGlassPriceTracker(ctk.CTk):
                 sticky="nsew"
             )
 
-            # به‌روزرسانی موقعیت grid
+            # Updating the grid position
             self.dynamic_col += 1
             if self.dynamic_col >= 4:
                 self.dynamic_col = 0
                 self.dynamic_row += 1
 
-            # اضافه کردن به مجموعه انتخاب شده‌ها
+            # Adding to the selected collection
             self.selected_currencies.add(selected_symbol)
 
-            # به‌روزرسانی انتخابگر
+            # Updating the selector
             self.update_currency_selector()
 
-            # پیام موفقیت با طراحی مناسب
+            # Updating the selector
             messagebox.showinfo(
                 "✨ Liquid Success",
                 f"🎉 {selected_name} added to your liquid portfolio!\n\nEnjoy the real-time updates with glass-smooth animations."
             )
 
     def manual_refresh(self):
-        """رفرش دستی داده‌ها"""
+        """Manually refreshing data"""
         def refresh_thread():
             try:
-                # به‌روزرسانی وضعیت
+                # Updating status
                 self.after(0, lambda: self.update_api_status("connecting", "Refreshing..."))
                 
-                # دریافت داده‌های جدید
+                # Fetching new data
                 api_data = self.fetch_api_data()
                 
                 if api_data:
-                    # به‌روزرسانی داده‌ها
+                    # Updating data
                     new_currencies = {}
                     for category, items in api_data.items():
                         if isinstance(items, list):
@@ -1262,7 +1262,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
                                         'symbol': symbol
                                     }
                     
-                    # به‌روزرسانی در UI thread
+                    # Updating on the UI thread
                     self.after(0, lambda: self.update_ui_with_new_data(new_currencies))
                     
                 else:
@@ -1276,21 +1276,21 @@ class LiquidGlassPriceTracker(ctk.CTk):
                     f"Failed to refresh data:\n{str(e)}"
                 ))
         
-        # اجرای رفرش در thread جداگانه
+        # Executing refresh on a separate thread
         threading.Thread(target=refresh_thread, daemon=True).start()
 
     def update_ui_with_new_data(self, new_currencies):
-        """به‌روزرسانی UI با داده‌های جدید"""
+        """Updating UI with new data"""
         if new_currencies:
             self.all_currencies = new_currencies
             
-            # به‌روزرسانی کارت‌های موجود
+            # Updating existing cards
             self.refresh_existing_cards()
             
-            # به‌روزرسانی انتخابگر
+            # Updating the selector
             self.update_currency_selector()
             
-            # نمایش پیام موفقیت
+            # Displaying success message
             self.create_floating_notification("🔄 Data refreshed successfully!")
         else:
             messagebox.showwarning(
@@ -1299,26 +1299,26 @@ class LiquidGlassPriceTracker(ctk.CTk):
             )
 
     def refresh_existing_cards(self):
-        """به‌روزرسانی کارت‌های موجود با داده‌های جدید"""
+        """Updating existing cards with new data"""
         try:
-            # بازسازی featured currencies
+            # Rebuilding featured currencies
             for widget in self.featured_container.winfo_children():
                 widget.destroy()
             
-            # بازسازی dynamic currencies  
+            # Rebuilding dynamic currencies
             for widget in self.dynamic_container.winfo_children():
                 widget.destroy()
             
-            # ریست کردن grid position
+            # Resetting grid position
             self.dynamic_row = 0
             self.dynamic_col = 0
             
-            # نمایش مجدد featured
+            # Redisplaying featured
             self.display_featured_currencies()
             
-            # نمایش مجدد ارزهای اضافه شده
+            # Redisplaying added currencies
             remaining_selected = self.selected_currencies.copy()
-            # حذف featured از selected تا دوبار نمایش داده نشوند
+            # Removing featured from selected so they are not displayed twice
             preferred_featured = ["USD", "EUR", "BTC", "ETH"]
             for symbol in preferred_featured:
                 remaining_selected.discard(symbol)
@@ -1344,7 +1344,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
             print(f"Card refresh error: {e}")
 
     def start_auto_refresh(self):
-        """شروع رفرش خودکار هر 5 دقیقه"""
+        """Automatic refresh started every 5 minutes"""
         def auto_refresh_loop():
             while True:
                 try:
@@ -1355,11 +1355,11 @@ class LiquidGlassPriceTracker(ctk.CTk):
                     print(f"Auto-refresh error: {e}")
                     break
         
-        # شروع thread برای auto refresh
+        # Start thread for auto refresh
         threading.Thread(target=auto_refresh_loop, daemon=True).start()
 
     def auto_refresh_data(self):
-        """رفرش خودکار داده‌ها (بدون نمایش پیام)"""
+        """Automatic data refresh (without showing a message)"""
         def refresh_thread():
             api_data = self.fetch_api_data()
             if api_data:
@@ -1383,7 +1383,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
         threading.Thread(target=refresh_thread, daemon=True).start()
 
     def silent_update_ui(self, new_currencies):
-        """به‌روزرسانی بی‌صدا UI"""
+        """Silent UI update"""
         if new_currencies:
             self.all_currencies = new_currencies
             self.refresh_existing_cards()
@@ -1391,8 +1391,8 @@ class LiquidGlassPriceTracker(ctk.CTk):
             print("🔄 Auto-refresh completed successfully")
 
     def create_floating_notification(self, message):
-        """اعلان شناور Liquid"""
-        # ساخت اعلان موقت در گوشه
+        """Liquid floating notification"""
+        # Creating a temporary notification in the corner
         notification = ctk.CTkFrame(
             self,
             fg_color=(LIQUID_GLASS_COLORS['glass_overlay_light'], LIQUID_GLASS_COLORS['glass_overlay_dark']),
@@ -1411,12 +1411,12 @@ class LiquidGlassPriceTracker(ctk.CTk):
         )
         label.pack(padx=16, pady=8)
 
-        # خودکار حذف بعد از 3 ثانیه
+        # Automatically delete after 3 seconds
         self.after(3000, notification.destroy)
 
 
 def check_liquid_requirements():
-    """بررسی نیازمندی‌های Liquid Glass"""
+    """Checking Liquid Glass requirements"""
     print("🌊" + "=" * 80 + "🌊")
     print("   LIQUID GLASS PRICE TRACKER - LIVE API VERSION")
     print("🌊" + "=" * 80 + "🌊")
@@ -1425,7 +1425,7 @@ def check_liquid_requirements():
     print(f"🔗 API Endpoint: {API_URL}")
     print(f"📱 App Resolution: {APP_WIDTH}x{APP_HEIGHT}")
 
-    # بررسی اتصال اینترنت
+    # Checking internet connection
     try:
         response = requests.get("https://httpbin.org/status/200", timeout=5)
         print("✅ Internet connection: Available")
@@ -1464,14 +1464,14 @@ def check_liquid_requirements():
 
 
 if __name__ == "__main__":
-    # بررسی سیستم و نیازمندی‌ها
+    # Checking system and requirements
     check_liquid_requirements()
 
-    # تنظیمات CustomTkinter با بهینه‌سازی Liquid
-    ctk.set_appearance_mode("system")  # تشخیص خودکار حالت سیستم
-    ctk.set_default_color_theme("blue")  # تم پایه آبی Apple
+    # CustomTkinter settings with Liquid optimization
+    ctk.set_appearance_mode("system")  # Auto-detecting system mode
+    ctk.set_default_color_theme("blue")  # Apple's basic blue theme
 
-    # اجرای برنامه Live Liquid Glass
+    # Run the Live Liquid Glass program
     try:
         print("🌊 Initializing Live Liquid Glass interface...")
         app = LiquidGlassPriceTracker()
