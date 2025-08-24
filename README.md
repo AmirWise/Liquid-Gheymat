@@ -3,6 +3,10 @@ A modern currency tracker with Liquid Glass design, vivid colors, and dynamic bl
 
 ![Style](https://img.shields.io/badge/Style-Liquid%20Glass-blue) ![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-green) ![Python](https://img.shields.io/badge/Python-3.8%2B-yellow)
 
+| Language | زبان |
+|----------|------|
+| [English](README.md) | [فارسی](README.fa.md) |
+
 ## ✨ Features
 - **Liquid Glass UI** – Smooth transparency with vivid 3D highlights and shadows.
 - **Real-time Currency Tracking** – Monitors USD, EUR, BTC, ETH, and more.
