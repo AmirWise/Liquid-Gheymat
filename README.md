@@ -50,8 +50,8 @@ Liquid-Gheymat/
     ├── fonts/
     │   └── Vazirmatn-Regular.ttf
     ├── icons/
-    │   └── icon.ico
-    └── allprices.json
+        └── icon.ico
+  
 ```
 
 ## ⚙️ Configuration
