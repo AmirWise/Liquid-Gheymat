@@ -5,19 +5,20 @@ import json
 import pyglet
 from tkinter import messagebox
 import math
+import requests
+import threading
+from datetime import datetime
 
 # --- بررسی سیستم‌عامل برای اعمال افکت ---
 IS_WINDOWS = sys.platform == "win32"
 if IS_WINDOWS:
     try:
         import pywinstyles
-
         PYWINSTYLES_AVAILABLE = True
         print("✅ pywinstyles imported successfully")
     except ImportError:
         PYWINSTYLES_AVAILABLE = False
         print("❌ pywinstyles not available - install with: pip install pywinstyles")
-
 
 # --- توابع کمکی ---
 def resource_path(relative_path):
@@ -27,20 +28,19 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
-
 def load_font(font_path):
     try:
         pyglet.font.add_file(font_path)
     except Exception as e:
         print(f"Failed to load font: {e}")
 
-
 # --- ثابت‌ها ---
 FONT_NAME = "SF Pro Display"
 FALLBACK_FONT = "Segoe UI"
 FONT_PATH = resource_path("assets/fonts/Vazirmatn-Regular.ttf")
 ICON_PATH = resource_path("assets/icons/icon.ico")
-LOCAL_API_PATH = resource_path("assets/allprices.json")
+# API URL instead of local file
+API_URL = "https://brsapi.ir/Api/Market/Gold_Currency.php?key=BWUuKdavyBLGXxidEjfNJeb33rsryQfh"
 APP_WIDTH, APP_HEIGHT = 1200, 850
 
 load_font(FONT_PATH)
@@ -87,7 +87,6 @@ LIQUID_GLASS_COLORS = {
     'separator_dark': "#1c1c1e"
 }
 
-
 # --- کلاس اصلی با Liquid Glass و 3D ---
 class LiquidGlassPriceTracker(ctk.CTk):
     def __init__(self):
@@ -98,6 +97,10 @@ class LiquidGlassPriceTracker(ctk.CTk):
         self.minsize(1000, 750)
         self.resizable(True, True)
         self.current_theme = "liquid_glass"
+        
+        # Initialize API status
+        self.api_status = "connecting"
+        self.last_update = "Never"
 
         # تنظیم آیکون
         try:
@@ -117,6 +120,9 @@ class LiquidGlassPriceTracker(ctk.CTk):
         # تنظیم responsive
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
+        
+        # Start auto-refresh timer
+        self.start_auto_refresh()
 
     def apply_liquid_glass(self):
         """اعمال افکت Liquid Glass با شفافیت کامل"""
@@ -251,6 +257,9 @@ class LiquidGlassPriceTracker(ctk.CTk):
         # === Liquid Control Panel ===
         if IS_WINDOWS and PYWINSTYLES_AVAILABLE:
             self.create_liquid_controls()
+        
+        # === Refresh Controls ===
+        self.create_refresh_controls()
 
     def create_liquid_hero(self):
         """Hero section با Liquid Glass و 3D Shadow"""
@@ -272,7 +281,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
 
         title = ctk.CTkLabel(
             title_frame,
-            text="✨ Liquid Gheymat?!",
+            text="✨ Liquid Gheymat Live!",
             font=(FALLBACK_FONT, 36, "bold"),
             text_color=(LIQUID_GLASS_COLORS['text_primary_light'], LIQUID_GLASS_COLORS['text_primary_dark'])
         )
@@ -281,18 +290,18 @@ class LiquidGlassPriceTracker(ctk.CTk):
         # Glowing subtitle
         subtitle = ctk.CTkLabel(
             content,
-            text="Real-time currency tracking with Liquid Gheymat technology",
+            text="Real-time currency tracking with Live API updates",
             font=(FALLBACK_FONT, 16),
             text_color=(LIQUID_GLASS_COLORS['text_secondary_light'], LIQUID_GLASS_COLORS['text_secondary_dark'])
         )
         subtitle.pack(anchor="w", pady=(8, 0))
 
-        # Liquid status indicator
+        # Live API status indicator
         status_container = ctk.CTkFrame(content, fg_color="transparent")
         status_container.pack(anchor="w", pady=(16, 0))
 
         # 3D status pill
-        status_pill = ctk.CTkFrame(
+        self.status_pill = ctk.CTkFrame(
             status_container,
             fg_color=(LIQUID_GLASS_COLORS['glass_overlay_light'], LIQUID_GLASS_COLORS['glass_overlay_dark']),
             corner_radius=20,
@@ -300,27 +309,27 @@ class LiquidGlassPriceTracker(ctk.CTk):
             border_width=0.5,
             border_color=(LIQUID_GLASS_COLORS['border_light'], LIQUID_GLASS_COLORS['border_dark'])
         )
-        status_pill.pack(anchor="w")
+        self.status_pill.pack(anchor="w")
 
-        pill_content = ctk.CTkFrame(status_pill, fg_color="transparent")
+        pill_content = ctk.CTkFrame(self.status_pill, fg_color="transparent")
         pill_content.pack(fill="both", expand=True, padx=16, pady=8)
 
         # Animated dot
-        status_dot = ctk.CTkLabel(
+        self.status_dot = ctk.CTkLabel(
             pill_content,
             text="●",
             font=(FALLBACK_FONT, 14),
-            text_color=LIQUID_GLASS_COLORS['green_glass']
+            text_color=LIQUID_GLASS_COLORS['orange_glass']
         )
-        status_dot.pack(side="left")
+        self.status_dot.pack(side="left")
 
-        status_text = ctk.CTkLabel(
+        self.status_text = ctk.CTkLabel(
             pill_content,
-            text="Live Liquid Data",
+            text="Connecting to Live API...",
             font=(FALLBACK_FONT, 13, "normal"),
             text_color=(LIQUID_GLASS_COLORS['text_primary_light'], LIQUID_GLASS_COLORS['text_primary_dark'])
         )
-        status_text.pack(side="left", padx=(8, 0))
+        self.status_text.pack(side="left", padx=(8, 0))
 
     def create_3d_featured_section(self):
         """بخش ارزهای ویژه با 3D Cards"""
@@ -481,6 +490,172 @@ class LiquidGlassPriceTracker(ctk.CTk):
                 width=130
             )
             btn.pack(side="left", padx=(0, 8) if i < len(buttons) - 1 else (0, 0))
+
+    def create_refresh_controls(self):
+        """بخش کنترل‌های رفرش و آپدیت"""
+        refresh_card = self.create_liquid_card(
+            self.main_scroll,
+            height=120,
+            glass_level=2
+        )
+        refresh_card.grid(row=7, column=0, sticky="ew", pady=(16, 0))
+
+        content = ctk.CTkFrame(refresh_card, fg_color="transparent")
+        content.pack(fill="both", expand=True, padx=20, pady=16)
+
+        # Title
+        title = ctk.CTkLabel(
+            content,
+            text="🔄 Live Data Controls",
+            font=(FALLBACK_FONT, 16, "normal"),
+            text_color=(LIQUID_GLASS_COLORS['text_primary_light'], LIQUID_GLASS_COLORS['text_primary_dark'])
+        )
+        title.pack(anchor="w", pady=(0, 8))
+
+        # Top controls frame
+        controls_frame = ctk.CTkFrame(content, fg_color="transparent")
+        controls_frame.pack(anchor="w", pady=(0, 8))
+
+        # Refresh button
+        refresh_btn = self.create_liquid_button(
+            controls_frame,
+            text="🔄 Refresh Now",
+            command=self.manual_refresh,
+            style="primary_3d",
+            width=120
+        )
+        refresh_btn.pack(side="left", padx=(0, 12))
+
+        # Test API button for debugging
+        test_btn = self.create_liquid_button(
+            controls_frame,
+            text="🔍 Test API",
+            command=self.test_api_connection,
+            style="crystal",
+            width=100
+        )
+        test_btn.pack(side="left", padx=(0, 12))
+
+        # Last update label
+        self.last_update_label = ctk.CTkLabel(
+            controls_frame,
+            text=f"Last Update: {self.last_update}",
+            font=(FALLBACK_FONT, 12),
+            text_color=(LIQUID_GLASS_COLORS['text_secondary_light'], LIQUID_GLASS_COLORS['text_secondary_dark'])
+        )
+        self.last_update_label.pack(side="left")
+        
+    def test_api_connection(self):
+        """تست اتصال API برای debugging"""
+        def test_thread():
+            try:
+                self.after(0, lambda: self.update_api_status("connecting", "Testing API..."))
+                
+                print("\n" + "="*60)
+                print("🧪 API CONNECTION TEST STARTED")
+                print("="*60)
+                
+                # Basic connection test
+                print(f"🌐 Testing URL: {API_URL}")
+                
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Accept': 'application/json, text/plain, */*',
+                }
+                
+                response = requests.get(API_URL, headers=headers, timeout=10)
+                
+                print(f"📡 Status Code: {response.status_code}")
+                print(f"📄 Content-Type: {response.headers.get('content-type', 'Unknown')}")
+                print(f"📏 Content Length: {len(response.text)} characters")
+                print(f"🔗 Final URL: {response.url}")
+                
+                if response.status_code == 200:
+                    print("✅ HTTP request successful")
+                    
+                    # Try to parse JSON
+                    try:
+                        data = response.json()
+                        print(f"✅ JSON parsing successful")
+                        print(f"📊 Data type: {type(data)}")
+                        
+                        if isinstance(data, dict):
+                            print(f"🗂️ Keys: {list(data.keys())}")
+                            for key, value in data.items():
+                                print(f"   {key}: {type(value)} ({len(value) if hasattr(value, '__len__') else 'N/A'} items)")
+                        elif isinstance(data, list):
+                            print(f"📋 List with {len(data)} items")
+                            if len(data) > 0:
+                                print(f"   First item type: {type(data[0])}")
+                                if isinstance(data[0], dict):
+                                    print(f"   First item keys: {list(data[0].keys())}")
+                        
+                        # Test processing
+                        test_currencies = {}
+                        processed = 0
+                        
+                        if isinstance(data, dict):
+                            for category, items in data.items():
+                                if isinstance(items, list):
+                                    for item in items:
+                                        if isinstance(item, dict) and item.get('symbol'):
+                                            processed += 1
+                                            test_currencies[item['symbol']] = item
+                                            if processed >= 3:  # Just test first 3
+                                                break
+                        
+                        print(f"🔬 Test processing: {processed} currencies found")
+                        for symbol, item in test_currencies.items():
+                            print(f"   {symbol}: {item.get('price', 'No price')} {item.get('unit', 'No unit')}")
+                        
+                        self.after(0, lambda: messagebox.showinfo(
+                            "✅ API Test Success",
+                            f"API is working!\n\n"
+                            f"Status: {response.status_code}\n"
+                            f"Data Type: {type(data).__name__}\n"
+                            f"Currencies Found: {processed}\n\n"
+                            f"Check console for detailed info."
+                        ))
+                        
+                    except Exception as json_error:
+                        print(f"❌ JSON parsing failed: {json_error}")
+                        print(f"📝 Raw response (first 200 chars):")
+                        print(response.text[:200])
+                        
+                        self.after(0, lambda: messagebox.showerror(
+                            "❌ JSON Error",
+                            f"API responded but data is not valid JSON:\n\n"
+                            f"{str(json_error)}\n\n"
+                            f"Raw response: {response.text[:100]}..."
+                        ))
+                else:
+                    print(f"❌ HTTP error: {response.status_code}")
+                    print(f"📝 Response: {response.text[:200]}")
+                    
+                    self.after(0, lambda: messagebox.showerror(
+                        "❌ HTTP Error",
+                        f"API returned error {response.status_code}\n\n"
+                        f"Response: {response.text[:100]}..."
+                    ))
+                
+                print("="*60)
+                print("🧪 API TEST COMPLETED")
+                print("="*60 + "\n")
+                
+            except Exception as e:
+                print(f"💥 API test failed: {e}")
+                import traceback
+                traceback.print_exc()
+                
+                self.after(0, lambda: messagebox.showerror(
+                    "💥 Connection Failed", 
+                    f"Could not connect to API:\n\n{str(e)}"
+                ))
+            
+            finally:
+                self.after(0, lambda: self.update_api_status("error", "Test Completed"))
+        
+        threading.Thread(target=test_thread, daemon=True).start()
 
     def apply_crystal_mode(self):
         """حالت کریستال با شفافیت بالا"""
@@ -687,7 +862,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
                 text = f"↘ {change_val:.2f}%"
         except:
             color = LIQUID_GLASS_COLORS['text_secondary_light']
-            text = "— N/A"
+            text = "– N/A"
 
         change_pill = ctk.CTkFrame(
             content,
@@ -707,43 +882,235 @@ class LiquidGlassPriceTracker(ctk.CTk):
 
         return card
 
+    def fetch_api_data(self):
+        """دریافت داده‌ها از API با headers و debugging بهتر"""
+        try:
+            print(f"🌐 Fetching data from API: {API_URL}")
+            self.update_api_status("connecting", "Fetching Live Data...")
+            
+            # Headers برای درخواست بهتر
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'application/json, text/plain, */*',
+                'Accept-Language': 'fa-IR,fa;q=0.9,en;q=0.8',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Cache-Control': 'no-cache'
+            }
+            
+            # درخواست با تنظیمات بهتر
+            response = requests.get(
+                API_URL, 
+                headers=headers,
+                timeout=15,
+                verify=True,  # SSL verification
+                allow_redirects=True
+            )
+            
+            print(f"📡 Response status code: {response.status_code}")
+            print(f"📝 Response headers: {dict(response.headers)}")
+            
+            # بررسی status code
+            response.raise_for_status()
+            
+            # بررسی content type
+            content_type = response.headers.get('content-type', '')
+            print(f"📄 Content type: {content_type}")
+            
+            # تلاش برای parse کردن JSON
+            try:
+                data = response.json()
+            except ValueError as json_error:
+                # اگر JSON نبود، متن خام را چاپ کن
+                print(f"❌ JSON parse error: {json_error}")
+                print(f"📝 Raw response text (first 500 chars): {response.text[:500]}")
+                raise ValueError(f"Invalid JSON response: {json_error}")
+            
+            # بررسی وجود داده
+            if not data:
+                raise ValueError("Empty response from API")
+            
+            # Debug info
+            print(f"📊 Response data type: {type(data)}")
+            if isinstance(data, dict):
+                print(f"🗂️ Available keys: {list(data.keys())}")
+                print(f"✅ Successfully fetched {len(data)} categories from API")
+            elif isinstance(data, list):
+                print(f"📋 List with {len(data)} items")
+            else:
+                print(f"⚠️ Unexpected data format: {type(data)}")
+            
+            self.update_api_status("connected", "Live Data Connected")
+            self.last_update = datetime.now().strftime("%H:%M:%S")
+            
+            return data
+            
+        except requests.exceptions.Timeout:
+            print("⏱️ API request timed out after 15 seconds")
+            self.update_api_status("error", "Connection Timeout")
+            return None
+        except requests.exceptions.ConnectionError as e:
+            print(f"🌐 Connection error to API: {e}")
+            self.update_api_status("error", "Connection Failed")
+            return None
+        except requests.exceptions.HTTPError as e:
+            print(f"📡 HTTP error: {e}")
+            print(f"📄 Response text: {e.response.text[:200] if e.response else 'No response'}")
+            status_code = e.response.status_code if e.response else "Unknown"
+            self.update_api_status("error", f"HTTP Error: {status_code}")
+            return None
+        except requests.exceptions.SSLError as e:
+            print(f"🔒 SSL error: {e}")
+            self.update_api_status("error", "SSL Certificate Error")
+            return None
+        except ValueError as e:
+            print(f"📊 Data parsing error: {e}")
+            self.update_api_status("error", "Invalid Data Format")
+            return None
+        except Exception as e:
+            print(f"❌ Unexpected API error: {e}")
+            import traceback
+            traceback.print_exc()
+            self.update_api_status("error", "API Error")
+            return None
+
+    def update_api_status(self, status, message):
+        """به‌روزرسانی وضعیت API در رابط کاربری"""
+        self.api_status = status
+        
+        try:
+            if status == "connected":
+                color = LIQUID_GLASS_COLORS['green_glass']
+                dot_text = "●"
+            elif status == "connecting":
+                color = LIQUID_GLASS_COLORS['orange_glass']
+                dot_text = "●"
+            else:  # error
+                color = LIQUID_GLASS_COLORS['red_glass']
+                dot_text = "●"
+            
+            self.status_dot.configure(text_color=color, text=dot_text)
+            self.status_text.configure(text=message)
+            
+            if hasattr(self, 'last_update_label'):
+                self.last_update_label.configure(text=f"Last Update: {self.last_update}")
+                
+        except Exception as e:
+            print(f"Status update error: {e}")
+
     def load_and_display_data(self):
-        """بارگذاری و نمایش داده‌ها"""
+        """بارگذاری و نمایش داده‌ها از API با fallback بهتر"""
         self.all_currencies = {}
         self.selected_currencies = set()
 
-        try:
-            with open(LOCAL_API_PATH, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+        # دریافت داده‌ها از API
+        api_data = self.fetch_api_data()
+        
+        if api_data:
+            try:
+                # پردازش داده‌های API - انعطاف‌پذیر برای فرمت‌های مختلف
+                processed_count = 0
+                
+                # حالت 1: اگر data یک dict با categories باشد
+                if isinstance(api_data, dict):
+                    for category, items in api_data.items():
+                        if isinstance(items, list):
+                            for item in items:
+                                if self.process_currency_item(item):
+                                    processed_count += 1
+                        elif isinstance(items, dict):
+                            # اگر items خودش یک currency object باشد
+                            if self.process_currency_item(items):
+                                processed_count += 1
+                
+                # حالت 2: اگر data مستقیماً یک list باشد
+                elif isinstance(api_data, list):
+                    for item in api_data:
+                        if self.process_currency_item(item):
+                            processed_count += 1
+                
+                # حالت 3: اگر data یک currency object مستقیم باشد
+                elif isinstance(api_data, dict) and api_data.get('symbol'):
+                    if self.process_currency_item(api_data):
+                        processed_count += 1
 
-            # پردازش داده‌ها
-            for category, items in data.items():
-                for item in items:
-                    symbol = item.get('symbol', '')
-                    name = self.format_currency_name(item, symbol)
+                if processed_count > 0:
+                    print(f"✅ Processed {processed_count} currencies from API")
+                    self.update_api_status("connected", f"Loaded {processed_count} currencies")
+                else:
+                    print("⚠️ No valid currencies found in API response")
+                    self.all_currencies = self.get_sample_data()
+                    self.update_api_status("error", "No Valid Data")
 
-                    self.all_currencies[symbol] = {
-                        'name': name,
-                        'price': str(item.get('price', 0)),
-                        'unit': item.get('unit', 'USD'),
-                        'change_percent': str(item.get('change_percent', 0)),
-                        'symbol': symbol
-                    }
+            except Exception as e:
+                print(f"⚠️ API data processing error: {e}")
+                import traceback
+                traceback.print_exc()
+                self.all_currencies = self.get_sample_data()
+                self.update_api_status("error", "Data Processing Error")
+        else:
+            # در صورت عدم دسترسی به API از داده‌های نمونه استفاده کن
+            print("🔄 Using sample data due to API unavailability")
+            self.all_currencies = self.get_sample_data()
 
-            print(f"✅ Loaded {len(self.all_currencies)} currencies")
-
-        except Exception as e:
-            print(f"⚠️ Using sample data: {e}")
+        # اگر هیچ داده‌ای نداریم، از نمونه استفاده کن
+        if not self.all_currencies:
+            print("📊 No data available, using sample dataset")
             self.all_currencies = self.get_sample_data()
 
         self.display_featured_currencies()
         self.update_currency_selector()
 
+    def process_currency_item(self, item):
+        """پردازش یک آیتم ارز از API"""
+        try:
+            if not isinstance(item, dict):
+                return False
+                
+            # استخراج symbol با روش‌های مختلف
+            symbol = item.get('symbol') or item.get('Symbol') or item.get('code') or item.get('Code')
+            
+            if not symbol:
+                # تلاش برای استخراج از key های مختلف
+                for key in ['name', 'Name', 'currency', 'Currency']:
+                    if key in item:
+                        symbol = str(item[key]).upper()
+                        break
+                
+            if not symbol:
+                return False
+            
+            # استخراج price
+            price = item.get('price') or item.get('Price') or item.get('value') or item.get('Value') or 0
+            
+            # استخراج change_percent
+            change = item.get('change_percent') or item.get('Change_Percent') or item.get('change') or item.get('Change') or 0
+            
+            # استخراج unit
+            unit = item.get('unit') or item.get('Unit') or item.get('currency') or item.get('Currency') or 'USD'
+            
+            # فرمت کردن نام
+            name = self.format_currency_name(item, symbol)
+            
+            self.all_currencies[symbol] = {
+                'name': name,
+                'price': str(price),
+                'unit': str(unit),
+                'change_percent': str(change),
+                'symbol': symbol
+            }
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error processing currency item: {e}")
+            return False
+
     def format_currency_name(self, item, symbol):
         """فرمت کردن نام ارز با ایموجی مناسب"""
         name_mapping = {
             'USD': "🇺🇸 US Dollar",
-            'EUR': "🇪🇺 Euro",
+            'EUR': "🇪🇺 Euro", 
             'GBP': "🇬🇧 British Pound",
             'JPY': "🇯🇵 Japanese Yen",
             'BTC': "₿ Bitcoin",
@@ -761,42 +1128,41 @@ class LiquidGlassPriceTracker(ctk.CTk):
         if symbol in name_mapping:
             return name_mapping[symbol]
         else:
-            return item.get('name_en', item.get('name', symbol))
+            # استفاده از نام انگلیسی از API
+            api_name = item.get('name_en', item.get('name', symbol))
+            return f"💱 {api_name}" if api_name != symbol else symbol
 
     def get_sample_data(self):
         """داده‌های نمونه با کیفیت Liquid - Enhanced Display"""
         return {
-            "USD": {"name": "🇺🇸 US Dollar", "price": "93750.25", "unit": "تومان", "change_percent": "1.04",
-                    "symbol": "USD"},
-            "EUR": {"name": "🇪🇺 Euro", "price": "109330.78", "unit": "تومان", "change_percent": "-0.52",
-                    "symbol": "EUR"},
-            "BTC": {"name": "₿ Bitcoin", "price": "114390.12345", "unit": "USD", "change_percent": "0.66",
-                    "symbol": "BTC"},
-            "ETH": {"name": "Ξ Ethereum", "price": "4365.89721", "unit": "USD", "change_percent": "4.82",
-                    "symbol": "ETH"},
-            "GBP": {"name": "🇬🇧 British Pound", "price": "126210.50", "unit": "تومان", "change_percent": "2.15",
-                    "symbol": "GBP"},
-            "JPY": {"name": "🇯🇵 Japanese Yen", "price": "639.123", "unit": "تومان", "change_percent": "-0.83",
-                    "symbol": "JPY"},
-            "USDT": {"name": "💰 Tether", "price": "93320.45", "unit": "تومان", "change_percent": "1.04",
-                     "symbol": "USDT"},
-            "XRP": {"name": "💎 Ripple", "price": "2.98456", "unit": "USD", "change_percent": "2.32", "symbol": "XRP"},
-            "BNB": {"name": "🟡 Binance Coin", "price": "692.78234", "unit": "USD", "change_percent": "3.45",
-                    "symbol": "BNB"},
-            "SOL": {"name": "🟣 Solana", "price": "248.12567", "unit": "USD", "change_percent": "5.67", "symbol": "SOL"},
-            "ADA": {"name": "🔷 Cardano", "price": "1.12389", "unit": "USD", "change_percent": "-1.23", "symbol": "ADA"},
-            "DOT": {"name": "⚫ Polkadot", "price": "8.45123", "unit": "USD", "change_percent": "2.89", "symbol": "DOT"},
-            "MATIC": {"name": "🟣 Polygon", "price": "1.23456", "unit": "USD", "change_percent": "1.67",
-                      "symbol": "MATIC"},
-            "AVAX": {"name": "🔺 Avalanche", "price": "45.67891", "unit": "USD", "change_percent": "-2.34",
-                     "symbol": "AVAX"}
+            "USD": {"name": "🇺🇸 US Dollar", "price": "93750.25", "unit": "تومان", "change_percent": "1.04", "symbol": "USD"},
+            "EUR": {"name": "🇪🇺 Euro", "price": "109330.78", "unit": "تومان", "change_percent": "-0.52", "symbol": "EUR"},
+            "BTC": {"name": "₿ Bitcoin", "price": "114390.12345", "unit": "USD", "change_percent": "0.66", "symbol": "BTC"},
+            "ETH": {"name": "Ξ Ethereum", "price": "4365.89721", "unit": "USD", "change_percent": "4.82", "symbol": "ETH"},
+            "GBP": {"name": "🇬🇧 British Pound", "price": "126210.50", "unit": "تومان", "change_percent": "2.15", "symbol": "GBP"},
+            "JPY": {"name": "🇯🇵 Japanese Yen", "price": "639.123", "unit": "تومان", "change_percent": "-0.83", "symbol": "JPY"}
         }
 
     def display_featured_currencies(self):
         """نمایش ارزهای ویژه با 3D Cards"""
-        featured = ["USD", "EUR", "BTC", "ETH"]
+        # انتخاب ارزهای پیش‌فرض یا اولین ارزهای موجود
+        preferred_featured = ["USD", "EUR", "BTC", "ETH"]
+        available_symbols = list(self.all_currencies.keys())
+        
+        featured = []
+        for symbol in preferred_featured:
+            if symbol in self.all_currencies:
+                featured.append(symbol)
+        
+        # اگر کافی نداریم، از بقیه اضافه کن
+        while len(featured) < 4 and len(featured) < len(available_symbols):
+            for symbol in available_symbols:
+                if symbol not in featured:
+                    featured.append(symbol)
+                    if len(featured) >= 4:
+                        break
 
-        for i, symbol in enumerate(featured):
+        for i, symbol in enumerate(featured[:4]):  # حداکثر 4 تا
             if symbol in self.all_currencies:
                 card = self.create_3d_currency_card(
                     self.featured_container,
@@ -869,11 +1235,160 @@ class LiquidGlassPriceTracker(ctk.CTk):
                 f"🎉 {selected_name} added to your liquid portfolio!\n\nEnjoy the real-time updates with glass-smooth animations."
             )
 
-    def animate_card_entry(self, card):
-        """انیمیشن ورود کارت (شبیه‌سازی)"""
-        # در CustomTkinter انیمیشن پیچیده محدود است
-        # اما می‌توان از alpha و scale استفاده کرد
-        pass
+    def manual_refresh(self):
+        """رفرش دستی داده‌ها"""
+        def refresh_thread():
+            try:
+                # به‌روزرسانی وضعیت
+                self.after(0, lambda: self.update_api_status("connecting", "Refreshing..."))
+                
+                # دریافت داده‌های جدید
+                api_data = self.fetch_api_data()
+                
+                if api_data:
+                    # به‌روزرسانی داده‌ها
+                    new_currencies = {}
+                    for category, items in api_data.items():
+                        if isinstance(items, list):
+                            for item in items:
+                                symbol = item.get('symbol', '')
+                                if symbol:
+                                    name = self.format_currency_name(item, symbol)
+                                    new_currencies[symbol] = {
+                                        'name': name,
+                                        'price': str(item.get('price', 0)),
+                                        'unit': item.get('unit', 'USD'),
+                                        'change_percent': str(item.get('change_percent', 0)),
+                                        'symbol': symbol
+                                    }
+                    
+                    # به‌روزرسانی در UI thread
+                    self.after(0, lambda: self.update_ui_with_new_data(new_currencies))
+                    
+                else:
+                    self.after(0, lambda: messagebox.showwarning(
+                        "⚠️ Refresh Warning",
+                        "Could not fetch fresh data from API.\nDisplaying cached data."
+                    ))
+            except Exception as e:
+                self.after(0, lambda: messagebox.showerror(
+                    "❌ Refresh Error", 
+                    f"Failed to refresh data:\n{str(e)}"
+                ))
+        
+        # اجرای رفرش در thread جداگانه
+        threading.Thread(target=refresh_thread, daemon=True).start()
+
+    def update_ui_with_new_data(self, new_currencies):
+        """به‌روزرسانی UI با داده‌های جدید"""
+        if new_currencies:
+            self.all_currencies = new_currencies
+            
+            # به‌روزرسانی کارت‌های موجود
+            self.refresh_existing_cards()
+            
+            # به‌روزرسانی انتخابگر
+            self.update_currency_selector()
+            
+            # نمایش پیام موفقیت
+            self.create_floating_notification("🔄 Data refreshed successfully!")
+        else:
+            messagebox.showwarning(
+                "⚠️ No Data",
+                "No valid data received from API."
+            )
+
+    def refresh_existing_cards(self):
+        """به‌روزرسانی کارت‌های موجود با داده‌های جدید"""
+        try:
+            # بازسازی featured currencies
+            for widget in self.featured_container.winfo_children():
+                widget.destroy()
+            
+            # بازسازی dynamic currencies  
+            for widget in self.dynamic_container.winfo_children():
+                widget.destroy()
+            
+            # ریست کردن grid position
+            self.dynamic_row = 0
+            self.dynamic_col = 0
+            
+            # نمایش مجدد featured
+            self.display_featured_currencies()
+            
+            # نمایش مجدد ارزهای اضافه شده
+            remaining_selected = self.selected_currencies.copy()
+            # حذف featured از selected تا دوبار نمایش داده نشوند
+            preferred_featured = ["USD", "EUR", "BTC", "ETH"]
+            for symbol in preferred_featured:
+                remaining_selected.discard(symbol)
+            
+            for symbol in remaining_selected:
+                if symbol in self.all_currencies:
+                    card = self.create_3d_currency_card(
+                        self.dynamic_container,
+                        self.all_currencies[symbol]
+                    )
+                    card.grid(
+                        row=self.dynamic_row,
+                        column=self.dynamic_col,
+                        padx=6, pady=6, sticky="nsew"
+                    )
+                    
+                    self.dynamic_col += 1
+                    if self.dynamic_col >= 4:
+                        self.dynamic_col = 0
+                        self.dynamic_row += 1
+                        
+        except Exception as e:
+            print(f"Card refresh error: {e}")
+
+    def start_auto_refresh(self):
+        """شروع رفرش خودکار هر 5 دقیقه"""
+        def auto_refresh_loop():
+            while True:
+                try:
+                    import time
+                    time.sleep(300)  # 5 minutes
+                    self.after(0, self.auto_refresh_data)
+                except Exception as e:
+                    print(f"Auto-refresh error: {e}")
+                    break
+        
+        # شروع thread برای auto refresh
+        threading.Thread(target=auto_refresh_loop, daemon=True).start()
+
+    def auto_refresh_data(self):
+        """رفرش خودکار داده‌ها (بدون نمایش پیام)"""
+        def refresh_thread():
+            api_data = self.fetch_api_data()
+            if api_data:
+                new_currencies = {}
+                for category, items in api_data.items():
+                    if isinstance(items, list):
+                        for item in items:
+                            symbol = item.get('symbol', '')
+                            if symbol:
+                                name = self.format_currency_name(item, symbol)
+                                new_currencies[symbol] = {
+                                    'name': name,
+                                    'price': str(item.get('price', 0)),
+                                    'unit': item.get('unit', 'USD'),
+                                    'change_percent': str(item.get('change_percent', 0)),
+                                    'symbol': symbol
+                                }
+                
+                self.after(0, lambda: self.silent_update_ui(new_currencies))
+        
+        threading.Thread(target=refresh_thread, daemon=True).start()
+
+    def silent_update_ui(self, new_currencies):
+        """به‌روزرسانی بی‌صدا UI"""
+        if new_currencies:
+            self.all_currencies = new_currencies
+            self.refresh_existing_cards()
+            self.update_currency_selector()
+            print("🔄 Auto-refresh completed successfully")
 
     def create_floating_notification(self, message):
         """اعلان شناور Liquid"""
@@ -899,34 +1414,24 @@ class LiquidGlassPriceTracker(ctk.CTk):
         # خودکار حذف بعد از 3 ثانیه
         self.after(3000, notification.destroy)
 
-    def refresh_all_data(self):
-        """رفرش تمام داده‌ها"""
-        self.load_and_display_data()
-        self.create_floating_notification("🔄 Data refreshed successfully!")
-
-    def toggle_theme_mode(self):
-        """تغییر حالت روشن/تیره"""
-        current_mode = ctk.get_appearance_mode()
-        new_mode = "light" if current_mode == "dark" else "dark"
-        ctk.set_appearance_mode(new_mode)
-
-        self.create_floating_notification(f"🌓 Switched to {new_mode} mode!")
-
-    def create_context_menu(self, parent, currency_symbol):
-        """منوی راست کلیک برای کارت‌ها"""
-        # در CustomTkinter منوی context محدود است
-        # اما می‌توان دکمه‌های اضافی در کارت قرار داد
-        pass
-
 
 def check_liquid_requirements():
     """بررسی نیازمندی‌های Liquid Glass"""
     print("🌊" + "=" * 80 + "🌊")
-    print("   LIQUID GLASS PRICE TRACKER - PREMIUM EXPERIENCE CHECK")
+    print("   LIQUID GLASS PRICE TRACKER - LIVE API VERSION")
     print("🌊" + "=" * 80 + "🌊")
 
     print(f"\n💻 Operating System: {sys.platform}")
-    print(f"📏 App Resolution: {APP_WIDTH}x{APP_HEIGHT}")
+    print(f"🔗 API Endpoint: {API_URL}")
+    print(f"📱 App Resolution: {APP_WIDTH}x{APP_HEIGHT}")
+
+    # بررسی اتصال اینترنت
+    try:
+        response = requests.get("https://httpbin.org/status/200", timeout=5)
+        print("✅ Internet connection: Available")
+    except:
+        print("❌ Internet connection: Limited or unavailable")
+        print("   💡 App will use sample data if API fails")
 
     if IS_WINDOWS:
         print("✅ Windows detected - Full Liquid Glass effects available")
@@ -936,62 +1441,25 @@ def check_liquid_requirements():
             try:
                 import pywinstyles
                 print(f"📦 PyWinStyles version: {getattr(pywinstyles, '__version__', 'Unknown')}")
-
-                # تست سریع قابلیت‌ها
-                test_methods = ['apply_style', 'set_opacity', 'blur_behind']
-                available_methods = [method for method in test_methods if hasattr(pywinstyles, method)]
-                print(f"🔧 Available methods: {', '.join(available_methods)}")
-
             except Exception as e:
                 print(f"⚠️ PyWinStyles test failed: {e}")
         else:
             print("❌ PyWinStyles not installed")
             print("   💡 Install command: pip install pywinstyles")
             print("   🎨 Will use Liquid Glass simulation mode")
-
-        # بررسی نسخه Windows برای بهترین عملکرد
-        try:
-            import platform
-            win_version = platform.release()
-            win_build = platform.version()
-            print(f"🏷️ Windows: {win_version} (Build: {win_build})")
-
-            if win_version in ['10', '11']:
-                print("✅ Modern Windows - All Liquid effects supported")
-                print("💡 For best results: Enable transparency in Windows Settings")
-            else:
-                print("⚠️ Older Windows - Limited Liquid effects")
-
-        except:
-            print("❓ Windows version detection failed")
-
     else:
-        print("🍎 Non-Windows system detected")
+        print("🎏 Non-Windows system detected")
         print("💡 Using high-quality Liquid Glass simulation")
-        print("🌟 Still provides premium visual experience!")
 
-    print("\n" + "🎯 OPTIMAL LIQUID EXPERIENCE:" + " " * 30)
-    print("   • Windows 10 (Build 1903+) or Windows 11")
-    print("   • PyWinStyles library installed and updated")
-    print("   • Windows transparency effects enabled")
-    print("   • High DPI display (1920x1080+ recommended)")
-    print("   • Modern GPU for smooth glass rendering")
+    print("\n🌊 LIVE API FEATURES:" + " " * 35)
+    print("   • Real-time data from BRS API")
+    print("   • Auto-refresh every 5 minutes")
+    print("   • Manual refresh control")
+    print("   • Connection status indicator")
+    print("   • Fallback to sample data if API fails")
+    print("   • Thread-safe data updates")
 
-    print("\n" + "🌊 AVAILABLE LIQUID MODES:" + " " * 32)
-    print("   🌊 Liquid Glass    - Ultra-smooth translucent interface")
-    print("   ✨ Enhanced Vibrancy - Dynamic material with depth")
-    print("   🔮 Crystal Mode    - Maximum transparency and clarity")
-
-    print("\n" + "🎨 NEW LIQUID FEATURES:" + " " * 33)
-    print("   • Ultra-thin borders (0.5px precision)")
-    print("   • 3D floating cards with realistic shadows")
-    print("   • Liquid animations and smooth transitions")
-    print("   • Smart spacing - no more wall collisions")
-    print("   • Enhanced currency selector with premium UX")
-    print("   • Responsive 4-column grid system")
-    print("   • Live status indicators with glow effects")
-
-    print("\n🚀 Launching Liquid Glass experience...")
+    print("\n🚀 Launching Live Liquid Glass experience...")
     print("🌊" + "=" * 80 + "🌊\n")
 
 
@@ -1003,26 +1471,24 @@ if __name__ == "__main__":
     ctk.set_appearance_mode("system")  # تشخیص خودکار حالت سیستم
     ctk.set_default_color_theme("blue")  # تم پایه آبی Apple
 
-    # اجرای برنامه Liquid Glass
+    # اجرای برنامه Live Liquid Glass
     try:
-        print("🌊 Initializing Liquid Glass interface...")
+        print("🌊 Initializing Live Liquid Glass interface...")
         app = LiquidGlassPriceTracker()
 
-        print("🎉 Liquid Glass Price Tracker launched successfully!")
-        print("💡 Use the appearance controls to switch between liquid modes")
-        print("🎨 Enjoy the premium 3D experience with ultra-thin borders!")
+        print("🎉 Live Liquid Glass Price Tracker launched successfully!")
+        print("🔄 Auto-refresh enabled - data updates every 5 minutes")
+        print("💡 Use refresh controls for manual updates")
 
         app.mainloop()
 
     except Exception as e:
         print(f"\n💥 Liquid Glass launch failed: {e}")
         print("🔧 Troubleshooting tips:")
+        print("   • Check internet connection")
+        print("   • Verify API endpoint accessibility") 
         print("   • Check PyWinStyles installation: pip install --upgrade pywinstyles")
-        print("   • Verify Windows transparency settings")
         print("   • Try running as administrator")
-        print("   • Check system resources and GPU drivers")
 
         import traceback
-
         traceback.print_exc()
-        
