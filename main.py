@@ -124,8 +124,35 @@ class LiquidGlassPriceTracker(ctk.CTk):
         # Start auto-refresh timer
         self.start_auto_refresh()
 
+    def test_transparency_support(self):
+        """Test if the system supports transparency effects"""
+        if not IS_WINDOWS or not PYWINSTYLES_AVAILABLE:
+            return False
+        
+        try:
+            # Save current alpha
+            current_alpha = self.attributes('-alpha')
+            
+            # Test transparency
+            self.attributes('-alpha', 0.99)
+            
+            # Quick check if window is still visible by checking if it renders
+            self.update()
+            
+            # If we reach here, transparency works
+            self.attributes('-alpha', current_alpha)
+            return True
+            
+        except Exception:
+            # Restore full opacity if transparency fails
+            try:
+                self.attributes('-alpha', 1.0)
+            except:
+                pass
+            return False
+
     def apply_liquid_glass(self):
-        """apply Liquid Glass effect with full transparency"""
+        """apply Liquid Glass effect with transparency support detection"""
         if not IS_WINDOWS or not PYWINSTYLES_AVAILABLE:
             print("🌊 Liquid Glass simulation applied")
             return
@@ -138,7 +165,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
             print(f"❌ Liquid Glass failed: {e}")
 
     def _apply_liquid_effect(self):
-        """apply Liquid effect with optimal settings"""
+        """apply Liquid effect with transparency fallback protection"""
         try:
             # test different Liquid methods
             success = False
@@ -147,46 +174,78 @@ class LiquidGlassPriceTracker(ctk.CTk):
             if not success:
                 try:
                     pywinstyles.apply_style(self, "acrylic")
-                    # increase transparency for Liquid Glass
-                    self.attributes('-alpha', 0.97)
+                    # Test transparency support before applying alpha
+                    if self.test_transparency_support():
+                        self.attributes('-alpha', 0.97)
+                        print("🌊✨ Liquid Glass activated (Acrylic with transparency)")
+                    else:
+                        print("🌊✨ Liquid Glass activated (Acrylic without transparency)")
                     self.current_theme = "liquid_glass"
-                    print("🌊✨ Liquid Glass activated (Acrylic)")
                     success = True
-                except:
-                    pass
+                except Exception as e:
+                    print(f"Acrylic method failed: {e}")
+                    # Ensure opacity is reset on failure
+                    try:
+                        self.attributes('-alpha', 1.0)
+                    except:
+                        pass
 
             # method 2: Mica for Liquid effect
             if not success:
                 try:
                     pywinstyles.apply_style(self, "mica")
-                    self.attributes('-alpha', 0.98)
+                    if self.test_transparency_support():
+                        self.attributes('-alpha', 0.98)
+                        print("🌊 Liquid Glass activated (Mica with transparency)")
+                    else:
+                        print("🌊 Liquid Glass activated (Mica without transparency)")
                     self.current_theme = "liquid_glass"
-                    print("🌊 Liquid Glass activated (Mica)")
                     success = True
-                except:
-                    pass
+                except Exception as e:
+                    print(f"Mica method failed: {e}")
+                    try:
+                        self.attributes('-alpha', 1.0)
+                    except:
+                        pass
 
             # method 3: standard Blur
             if not success:
                 try:
                     pywinstyles.apply_style(self, "blur")
-                    self.attributes('-alpha', 0.95)
+                    if self.test_transparency_support():
+                        self.attributes('-alpha', 0.95)
+                        print("🌊 Liquid Glass activated (Blur with transparency)")
+                    else:
+                        print("🌊 Liquid Glass activated (Blur without transparency)")
                     self.current_theme = "liquid_glass"
-                    print("🌊 Liquid Glass activated (Blur)")
                     success = True
-                except:
-                    pass
+                except Exception as e:
+                    print(f"Blur method failed: {e}")
+                    try:
+                        self.attributes('-alpha', 1.0)
+                    except:
+                        pass
 
             if not success:
                 print("🌊 Using Liquid Glass simulation")
                 self.current_theme = "liquid_glass"
+                # Ensure full opacity for fallback mode
+                try:
+                    self.attributes('-alpha', 1.0)
+                except:
+                    pass
 
         except Exception as e:
             print(f"Liquid effects error: {e}")
             self.current_theme = "liquid_glass"
+            # Ensure window remains visible
+            try:
+                self.attributes('-alpha', 1.0)
+            except:
+                pass
 
     def apply_enhanced_vibrancy(self):
-        """advanced Vibrancy effect"""
+        """advanced Vibrancy effect with transparency protection"""
         if not IS_WINDOWS or not PYWINSTYLES_AVAILABLE:
             return
 
@@ -197,7 +256,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
             print(f"❌ Enhanced Vibrancy failed: {e}")
 
     def _apply_vibrancy_enhanced(self):
-        """apply Vibrancy with high quality"""
+        """apply Vibrancy with transparency support check"""
         try:
             success = False
 
@@ -205,18 +264,50 @@ class LiquidGlassPriceTracker(ctk.CTk):
             if not success:
                 try:
                     pywinstyles.apply_style(self, "aero")
-                    self.attributes('-alpha', 0.92)
+                    if self.test_transparency_support():
+                        self.attributes('-alpha', 0.92)
+                        print("✨ Enhanced Vibrancy activated with transparency")
+                    else:
+                        print("✨ Enhanced Vibrancy activated without transparency")
                     self.current_theme = "enhanced_vibrancy"
-                    print("✨ Enhanced Vibrancy activated")
                     success = True
-                except:
-                    pass
+                except Exception as e:
+                    print(f"Aero method failed: {e}")
+                    try:
+                        self.attributes('-alpha', 1.0)
+                    except:
+                        pass
 
             if not success:
                 self.apply_liquid_glass()
 
         except Exception as e:
             print(f"Vibrancy error: {e}")
+            try:
+                self.attributes('-alpha', 1.0)
+            except:
+                pass
+            self.apply_liquid_glass()
+
+    def apply_crystal_mode(self):
+        """crystal mode with transparency support check"""
+        if not IS_WINDOWS or not PYWINSTYLES_AVAILABLE:
+            return
+
+        try:
+            pywinstyles.apply_style(self, "optimised")
+            if self.test_transparency_support():
+                self.attributes('-alpha', 0.89)
+                print("🔮 Crystal Mode activated with transparency")
+            else:
+                print("🔮 Crystal Mode activated without transparency")
+            self.current_theme = "crystal"
+        except Exception as e:
+            print(f"Crystal mode failed: {e}")
+            try:
+                self.attributes('-alpha', 1.0)
+            except:
+                pass
             self.apply_liquid_glass()
 
     def create_liquid_layout(self):
@@ -656,20 +747,6 @@ class LiquidGlassPriceTracker(ctk.CTk):
                 self.after(0, lambda: self.update_api_status("error", "Test Completed"))
         
         threading.Thread(target=test_thread, daemon=True).start()
-
-    def apply_crystal_mode(self):
-        """crystal mode with high transparency"""
-        if not IS_WINDOWS or not PYWINSTYLES_AVAILABLE:
-            return
-
-        try:
-            pywinstyles.apply_style(self, "optimised")
-            self.attributes('-alpha', 0.89)
-            self.current_theme = "crystal"
-            print("🔮 Crystal Mode activated")
-        except Exception as e:
-            print(f"Crystal mode failed: {e}")
-            self.apply_liquid_glass()
 
     def create_liquid_card(self, parent, height=None, glass_level=1, shadow_3d=False, **kwargs):
         """create Liquid Glass card with 3D effects"""
