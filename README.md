@@ -17,6 +17,7 @@ A modern currency tracker with Liquid Glass design, vivid colors, and dynamic bl
 ## 🖼 Screenshots
 ![Preview1](images/firstpic.png)
 ![Preview2](images/secondpic.png)
+![Preview3](images/thirdpic.png)
 
 ## 🚀 Installation
 ### Prerequisites
