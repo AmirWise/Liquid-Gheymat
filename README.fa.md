@@ -15,6 +15,7 @@
 ## 🖼 تصاویر پیش‌نمایش
 ![پیش‌نمایش ۱](images/firstpic.png)
 ![پیش‌نمایش ۲](images/secondpic.png)
+![پیش‌نمایش 3](images/thirdpic.png)
 
 ## 🚀 نصب
 ### پیش‌نیازها
