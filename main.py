@@ -1,4 +1,6 @@
 """
+**KOD BEZAN HAMMAL**
+
 Liquid Gheymat Price Tracker - Professional Edition (Fixed API & Themes)
 Advanced Real-time Currency Exchange Rate Monitor
 Author: Professional Development Team
