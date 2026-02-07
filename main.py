@@ -2928,6 +2928,22 @@ class DesktopWidgetWindow(tk.Toplevel):
         self.after(self._DATA_TICK_MS, self._data_tick)
 
     def apply_typography(self) -> None:
+        """Re-apply fonts + refresh rendered strings (language/unit labels)"""
+        try:
+            # Force signature refresh so periodic ticks won't early-exit
+            self._last_sig = None
+        except Exception:
+            pass
+
+        # Refresh cache using current app data so language-dependent labels update immediately
+        try:
+            cur = getattr(self.app, "currencies", None)
+            if isinstance(cur, dict):
+                self.update_from_data(cur)
+                return
+        except Exception:
+            pass
+
         self._redraw(force=True)
 
     def update_from_data(self, currencies: Dict[str, Dict[str, Any]]) -> None:
@@ -2968,7 +2984,11 @@ class DesktopWidgetWindow(tk.Toplevel):
         sym = str(self.cfg.symbol or "").upper().strip()
         d = currencies.get(sym) or {}
         price_str = "—"
-        unit = d.get("unit") or self.app._t("toman")
+        raw_unit = d.get("unit") or ""
+        try:
+            unit = self.app._unit_display(raw_unit) if raw_unit else self.app._t("toman")
+        except Exception:
+            unit = raw_unit or self.app._t("toman")
         try:
             price_str = CurrencyCardWidget._format_price(float(d.get("price", 0) or 0))
         except Exception:
@@ -3141,8 +3161,12 @@ class LiquidGlassPriceTracker(ctk.CTk):
         # ---------------------------------------------------------------------
         # Language / layout defaults
         # ---------------------------------------------------------------------
-        self.language: str = "fa"
-        self.rtl: bool = True
+        self.language: str = "en"
+        self.rtl: bool = False
+
+        # Typography (resolved at runtime; helps packaged builds where font family names can vary)
+        self._primary_font_family: str = config.PRIMARY_FONT or config.FALLBACK_FONT
+        self._persian_font_family: str = config.PERSIAN_FONT or config.FALLBACK_FONT
 
         # Responsive grid (featured + portfolio)
         self.grid_columns: int = int(max(2, min(config.GRID_COLUMNS, 4)))
@@ -3261,6 +3285,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
         # Build
         self._setup_window()
         self._load_resources()
+        self._resolve_font_families()
 
         # Load preferences early so the initial layout/text matches (language, RTL, interval, theme)
         self._load_saved_preferences()
@@ -3451,6 +3476,56 @@ class LiquidGlassPriceTracker(ctk.CTk):
         ):
             resource_manager.load_font(fp)
 
+    def _resolve_font_families(self) -> None:
+        """Resolve real font family names available to Tk (helps packaged builds)."""
+        try:
+            import tkinter.font as tkfont  # local import to avoid overhead on startup
+            fams = set(tkfont.families(self))
+        except Exception:
+            fams = set()
+
+        def pick(preferred: Sequence[str], fallback: str) -> str:
+            for name in preferred:
+                if not name:
+                    continue
+                if name in fams:
+                    return name
+
+            # Case-insensitive exact match
+            try:
+                low_map = {f.lower(): f for f in fams}
+                for name in preferred:
+                    if not name:
+                        continue
+                    hit = low_map.get(name.lower())
+                    if hit:
+                        return hit
+            except Exception:
+                pass
+
+            # Partial match (e.g., "Vazirmatn" vs "Vazirmatn Regular")
+            for name in preferred:
+                if not name:
+                    continue
+                nlow = str(name).lower()
+                for f in fams:
+                    if nlow in str(f).lower():
+                        return f
+
+            return fallback
+
+        # Prefer bundled fonts when available, otherwise fall back gracefully
+        self._persian_font_family = pick(
+            [config.PERSIAN_FONT, "Vazirmatn", "Vazirmatn Regular", "Vazirmatn-Regular", "Vazir"],
+            config.FALLBACK_FONT,
+        )
+        self._primary_font_family = pick(
+            [config.PRIMARY_FONT, "Inter", "Segoe UI", config.FALLBACK_FONT],
+            config.FALLBACK_FONT,
+        )
+
+
+
 
     # -------------------------------------------------------------------------
     # Language / typography / responsive layout
@@ -3492,9 +3567,9 @@ class LiquidGlassPriceTracker(ctk.CTk):
 
     def _font_family(self) -> str:
         if self.language == "fa":
-            return config.PERSIAN_FONT or config.FALLBACK_FONT
+            return (getattr(self, "_persian_font_family", None) or config.PERSIAN_FONT or config.FALLBACK_FONT)
         # English
-        return config.PRIMARY_FONT or config.FALLBACK_FONT
+        return (getattr(self, "_primary_font_family", None) or config.PRIMARY_FONT or config.FALLBACK_FONT)
 
     def _ui_font(self, size: int, bold: bool = False) -> Tuple[Any, ...]:
         family = self._font_family()
@@ -4108,8 +4183,15 @@ class LiquidGlassPriceTracker(ctk.CTk):
             if new_lang == self.language:
                 return
             self.language = new_lang
+            # Direction-dependent widgets (pack/grid order) must be rebuilt.
+            self.rtl = is_rtl(self.language)
             db_manager.save_preference("language", self.language)
-            self._apply_language()
+
+            try:
+                self._rebuild_main_sections()
+            except Exception:
+                # Fallback: at least refresh text/font/anchors
+                self._apply_language()
         except Exception:
             pass
 
@@ -4638,11 +4720,108 @@ class LiquidGlassPriceTracker(ctk.CTk):
             pass
 
     def _rebuild_main_sections(self) -> None:
+        # Ensure direction is up-to-date BEFORE rebuilding so pack/grid order is correct.
+        try:
+            self.language = self._normalize_language(self.language)
+        except Exception:
+            pass
+        self.rtl = is_rtl(self.language)
+
+        # Destroy existing section widgets
         try:
             for child in list(self.scroll_frame.winfo_children()):
                 child.destroy()
         except Exception:
             pass
+
+        # Reset UI caches/handles (avoid stale references to destroyed widgets)
+        try:
+            self.ui_elements = {}
+            self.theme_buttons = {}
+            self.featured_cards = {}
+            self.portfolio_cards = {}
+        except Exception:
+            pass
+
+        # Reset common widget refs so _apply_language won't touch destroyed widgets
+        for attr in (
+            "toolbar_title_label",
+            "language_var",
+            "language_menu",
+            "always_on_top_var",
+            "always_on_top_cb",
+            "background_var",
+            "background_cb",
+            "window_options_label",
+            "hero_title_label",
+            "hero_subtitle_label",
+            "hero_version_label",
+            "featured_title_label",
+            "insights_title_label",
+            "portfolio_title_label",
+            "history_title_label",
+            "converter_title_label",
+            "widgets_title_label",
+            "controls_title_label",
+            "settings_title_label",
+            "theme_title_label",
+            "gainers_title_label",
+            "losers_title_label",
+            "sort_label",
+            "portfolio_filter_var",
+            "portfolio_filter_entry",
+            "history_symbol_var",
+            "history_period_var",
+            "history_symbol_menu",
+            "history_period_menu",
+            "history_sparkline",
+            "history_stats_label",
+            "converter_amount_var",
+            "converter_from_var",
+            "converter_to_var",
+            "converter_result_label",
+            "converter_from_menu",
+            "converter_to_menu",
+            "widgets_type_var",
+            "widgets_symbol_var",
+            "widgets_type_menu",
+            "widgets_symbol_menu",
+            "widgets_active_list",
+        ):
+            try:
+                setattr(self, attr, None)
+            except Exception:
+                pass
+
+        for attr in (
+            "refresh_btn",
+            "test_btn",
+            "export_btn",
+            "copy_btn",
+            "layout_btn",
+            "auto_refresh_checkbox",
+            "refresh_interval_title_label",
+            "refresh_interval_menu",
+            "refresh_interval_var",
+            "language_setting_label",
+            "alerts_title_label",
+            "alerts_cb",
+            "alert_threshold_label",
+            "tools_title_label",
+            "clear_cache_btn",
+            "perf_btn",
+            "selector_search_entry",
+            "currency_selector",
+            "add_currency_inline_btn",
+            "portfolio_add_title_label",
+            "portfolio_sort_menu",
+            "portfolio_sort_var",
+            "last_update_label",
+        ):
+            try:
+                setattr(self, attr, None)
+            except Exception:
+                pass
 
         self._ui_row = 0
 
@@ -4676,6 +4855,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
             self._apply_grid_columns()
         except Exception:
             pass
+
 
     def _layout_move(self, key: str, direction: int) -> None:
         try:
@@ -6630,7 +6810,7 @@ class LiquidGlassPriceTracker(ctk.CTk):
             db_manager.save_selected_currencies(self.user_portfolio)
 
         # Language
-        saved_lang = db_manager.load_preference("language", "fa")
+        saved_lang = db_manager.load_preference("language", "en")
         self.language = self._normalize_language(str(saved_lang))
 
         # Theme
@@ -7238,3 +7418,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+    
