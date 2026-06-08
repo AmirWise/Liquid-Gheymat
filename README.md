@@ -31,6 +31,13 @@ A clean, modern desktop currency/crypto/metal tracker with a liquid-glass UI, fa
 
 > This README matches the current codebase (v4.0.0).
 
+## ⚠️ Notice
+
+The API used in the source code and the release version are different.
+To use the full features of the application, please download the release version.
+If you have your own API, use the source code.
+
+
 ## 🚀 Quick Start
 
 ### Prerequisites
