@@ -1,16 +1,37 @@
 # 🇮🇷 لیکوئید قیمت – ردیاب ارز
 یک ردیاب ارز مدرن با طراحی شیشه مایع، رنگ‌های زنده و افکت‌های بلور دینامیک.
 
+> [!IMPORTANT]
+> ## 📦 این پروژه جابه‌جا شده است
+> **لیکوئید قیمت، با نام و ساختار جدید به [Gheymat Morabba (قیمت مربا)](https://github.com/AmirWise/GheymatMorabba) تغییر یافته و بازنویسی شده است.**
+>
+> ادامه‌ی پروژه از این‌به‌بعد در **مخزن جدید** دنبال می‌شود — کد، نقشه‌ی راه و همه‌ی انتشارهای آتی آن‌جا قرار دارند.
+>
+> 👉 **لطفاً از این‌به‌بعد از مخزن جدید استفاده کنید:**
+> **➡️ [github.com/AmirWise/GheymatMorabba](https://github.com/AmirWise/GheymatMorabba)**
+>
+> - نسخه‌های جدید، رفع باگ و امکانات جدید در مخزن جدید منتشر می‌شوند
+> - Issue و Pull Request را در مخزن جدید باز کنید
+> - برای کلون کردن:
+>
+> ```bash
+> git clone https://github.com/AmirWise/GheymatMorabba.git
+> ```
+>
+> این مخزن **فقط برای مرجع و به‌صورت read-only** نگه داشته می‌شود و دیگر به‌روزرسانی نمی‌شود.
+
 | Language | زبان |
 |----------|------|
 | [English](README.md) | [فارسی](README.fa.md) |
 
-**نسخه:** 4.0.0  
+**نسخه:** 4.0.0 (قدیمی)  
 **نویسنده:** AmirWise  
-**مخزن:** [github.com/AmirWise/Liquid-Gheymat](https://github.com/AmirWise/Liquid-Gheymat)
+**مخزن (آدرس جدید):** [github.com/AmirWise/GheymatMorabba](https://github.com/AmirWise/GheymatMorabba)
 
 
 یک ردیاب تمیز و مدرن برای قیمت ارز، کریپتو و فلزات با رابط شیشه‌ای مایع، بروزرسانی سریع و ابزارهای کاربردی برای استفاده روزمره.
+
+> **توجه:** همه‌ی بخش‌های زیر مربوط به کد قدیمی (نسخه ۴.۰.۰) است. برای نسخه‌ی فعلی (۵.۰.۰ به بعد) به [Gheymat Morabba](https://github.com/AmirWise/GheymatMorabba) مراجعه کنید.
 
 ## ✨ تغییرات نسخه ۴.۰.۰
 
@@ -26,7 +47,7 @@
 - پشتیبانی از ویجت‌های دسکتاپ و حالت فشرده
 - نمایش اسپارک‌لاین تاریخچه قیمت و ابزار تبدیل سریع
 
-> این مستندات با کد فعلی برنامه (نسخه ۴.۰.۰) همخوانی دارد.
+> این مستندات با کد قدیمی برنامه (نسخه ۴.۰.۰) همخوانی دارد.
 
 ## ⚠️ توجه
 
@@ -34,6 +55,7 @@
 برای استفاده از امکانات اپلیکیشن، نسخه ریلیز را دانلود کنید.
 اگر API شخصی دارید، از سورس کد استفاده کنید.
 
+> **به نسخه‌ی تازه‌تر می‌خواهید برسید؟** پروژه به [Gheymat Morabba](https://github.com/AmirWise/GheymatMorabba) منتقل شده است.
 
 ## 🚀 راه‌اندازی سریع
 
@@ -43,8 +65,8 @@
 
 ### نصب
 ```bash
-git clone https://github.com/AmirWise/Liquid-Gheymat.git
-cd Liquid-Gheymat
+git clone https://github.com/AmirWise/GheymatMorabba.git
+cd Gheymat-Morabba
 pip install -r requirements.txt
 python main.py
 ```
@@ -71,6 +93,8 @@ Liquid-Gheymat/
 ## 🤝 مشارکت
 
 از مشارکت استقبال می‌کنم!
+
+> لطفاً مشارکت‌ها (Pull Request) را در مخزن جدید — [Gheymat Morabba](https://github.com/AmirWise/GheymatMorabba) — انجام دهید.
 
 ۱. مخزن را Fork کنید  
 ۲. شاخه جدید بسازید: `git checkout -b feature/ویژگی-جدید`  
